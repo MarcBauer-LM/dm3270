@@ -78,8 +78,7 @@ public class TelnetCommand extends AbstractTelnetCommand {
       } else if (type == TelnetSubcommand.START_TLS) {
         commandType = CommandType.START_TLS;
       } else {
-        throw new InvalidParameterException(
-            String.format("Unknown telnet command type: %02X %02X%n", command, type));
+        commandType = null;
       }
     } else {
       throw new InvalidParameterException("Buffer incorrect length");
@@ -111,6 +110,8 @@ public class TelnetCommand extends AbstractTelnetCommand {
         boolean preference = telnetState.doBinary();           // preference
         reply[1] = preference ? WILL : WONT;
         telnetState.setDoesBinary(preference);                 // set actual
+      } else if (commandType == null) {
+        reply[1] =  WONT;
       }
 
       setReply(new TelnetCommand(telnetState, reply));
