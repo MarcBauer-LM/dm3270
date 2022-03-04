@@ -12,25 +12,11 @@ To use the library is required [JRE8+](http://www.oracle.com/technetwork/java/ja
 To use the emulator as maven dependency include in `pom.xml`:
 
 ```xml
-<project>
-...
-<repositories>
-  <repository>
-    <id>jitpack.io</id>
-    <url>https://jitpack.io</url>
-  </repository>
-</repositories>
-...
-<dependencies>
   <dependency>
       <groupId>com.github.blazemeter</groupId>
       <artifactId>dm3270</artifactId>
-      <version>0.12.4-lib</version>
+      <version>0.14-lib-lib</version>
   </dependency>
-  ...
-</dependencies>
-...
-</project>
 ```
 
 >Check latest version in [releases](https://github.com/blazemeter/xtn5250/releases).

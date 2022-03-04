@@ -134,7 +134,7 @@ public class TN3270ExtendedSubcommand extends TelnetSubcommand {
     if (type == SubcommandType.DEVICE_TYPE && subType == SubType.IS) {
       byte[] reply =
           {TelnetCommand.IAC, TelnetCommand.SB, TN3270E, EXT_FUNCTIONS, EXT_REQUEST,
-              0x00, 0x02, 0x04, 0x05, TelnetCommand.IAC, TelnetCommand.SE};
+              0x00, 0x02, 0x04, TelnetCommand.IAC, TelnetCommand.SE};
       setReply(new TN3270ExtendedSubcommand(reply, 0, reply.length, telnetState));
     }
 

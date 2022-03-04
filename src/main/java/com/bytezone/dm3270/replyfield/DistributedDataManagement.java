@@ -1,39 +1,50 @@
 package com.bytezone.dm3270.replyfield;
 
-import com.bytezone.dm3270.buffers.Buffer;
+import java.nio.ByteBuffer;
 
 public class DistributedDataManagement extends QueryReplyField {
 
-  private int flags;
-  private int limitIn;
-  private int limitOut;
-  private int subsets;
-  private byte ddmSubset;
+  private final short flags;
+  private final short maximumInboundBytes;
+  private final short maximumOutboundBytes;
+  private final byte supportedSubsetsCount;
+  private final byte ddmSubsetId;
 
   public DistributedDataManagement(byte[] buffer) {
     super(buffer);
-    assert data[1] == DISTRIBUTED_DATA_MANAGEMENT_REPLY;
+    ByteBuffer dataBuffer = ByteBuffer.wrap(buffer);
+    //skip queryReply id
+    dataBuffer.get();
+    assert dataBuffer.get() == DISTRIBUTED_DATA_MANAGEMENT_REPLY;
+    flags = dataBuffer.getShort();
+    maximumInboundBytes = dataBuffer.getShort();
+    maximumOutboundBytes = dataBuffer.getShort();
+    supportedSubsetsCount = dataBuffer.get();
+    ddmSubsetId = dataBuffer.get();
+  }
 
-    flags = Buffer.unsignedShort(data, 2);
-    limitIn = Buffer.unsignedShort(data, 4);
-    limitOut = Buffer.unsignedShort(data, 6);
-    subsets = data[8] & 0xFF;
-    ddmSubset = data[9];
-
-    int ptr = 10;
-    while (ptr < data.length) {
-      int len = data[ptr] & 0xFF;
-      ptr += len;
-    }
+  public DistributedDataManagement() {
+    super(DISTRIBUTED_DATA_MANAGEMENT_REPLY);
+    flags = 0;
+    maximumInboundBytes = 8192;
+    maximumOutboundBytes = 8192;
+    supportedSubsetsCount = 1;
+    ddmSubsetId = 1;
+    ByteBuffer buffer = createReplyBuffer(8);
+    buffer.putShort(flags);
+    buffer.putShort(maximumInboundBytes);
+    buffer.putShort(maximumOutboundBytes);
+    buffer.put(supportedSubsetsCount);
+    buffer.put(ddmSubsetId);
   }
 
   @Override
   public String toString() {
     return super.toString() + String.format("%n  flags      : %04X", flags)
-        + String.format("%n  limit in   : %s", limitIn)
-        + String.format("%n  limit out  : %s", limitOut)
-        + String.format("%n  subsets    : %s", subsets)
-        + String.format("%n  DDMSS      : %s", ddmSubset);
+        + String.format("%n  limit in   : %d", maximumInboundBytes)
+        + String.format("%n  limit out  : %d", maximumOutboundBytes)
+        + String.format("%n  subsets    : %d", supportedSubsetsCount)
+        + String.format("%n  DDMSS      : %d", ddmSubsetId);
   }
 
 }

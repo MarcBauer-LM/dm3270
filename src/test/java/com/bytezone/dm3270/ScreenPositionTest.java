@@ -27,12 +27,9 @@ public class ScreenPositionTest {
   private ScreenPosition screenPosition;
   private static final byte VALUE = 0x01;
 
-  @Mock
-  private ScreenContext screenContext;
-
   @Before
   public void setup() {
-    screenPosition = new ScreenPosition(0, screenContext, Charset.CP1147);
+    screenPosition = new ScreenPosition(0, ScreenContext.DEFAULT_CONTEXT, Charset.CP1147);
   }
 
   @Test

@@ -1,5 +1,6 @@
 package com.bytezone.dm3270.replyfield;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +9,14 @@ public class Summary extends QueryReplyField {
   public Summary(byte[] buffer) {
     super(buffer);
     assert data[1] == SUMMARY_QUERY_REPLY;
+  }
+
+  public Summary(List<QueryReplyField> replyFields) {
+    super(SUMMARY_QUERY_REPLY);
+    replies = replyFields;
+    ByteBuffer buffer = createReplyBuffer(replyFields.size() + 1);
+    buffer.put(SUMMARY_QUERY_REPLY);
+    replyFields.forEach(r -> buffer.put(r.replyType.type));
   }
 
   protected boolean isListed(byte type) {
@@ -24,7 +33,7 @@ public class Summary extends QueryReplyField {
     StringBuilder text = new StringBuilder(super.toString());
 
     for (int i = 2; i < data.length; i++) {
-      text.append(String.format("%n  %-30s  %s", getReplyType(data[i]),
+      text.append(String.format("%n  %-30s  %s", ReplyType.fromId(data[i]),
           isProvided(data[i]) ? "" : "** missing **"));
     }
 

@@ -25,17 +25,17 @@ public class Screen implements DisplayScreen {
       {Attribute.XA_HIGHLIGHTING, Attribute.XA_FGCOLOR, Attribute.XA_CHARSET,
           Attribute.XA_BGCOLOR, Attribute.XA_TRANSPARENCY};
 
-  private final ScreenPosition[] screenPositions;
+  private ScreenPosition[] screenPositions;
   private final FieldManager fieldManager;
-  private final ScreenPacker screenPacker;
+  private ScreenPacker screenPacker;
 
   private final TelnetState telnetState;
   private final Charset charset;
 
   private final ScreenDimensions defaultScreenDimensions;
-  private ScreenDimensions alternateScreenDimensions;
+  private final ScreenDimensions alternateScreenDimensions;
 
-  private final Pen pen;
+  private Pen pen;
   private final Cursor cursor;
   private ScreenOption currentScreen;
   private boolean alarmSounded;
@@ -96,6 +96,10 @@ public class Screen implements DisplayScreen {
     fieldManager.setScreenDimensions(screenDimensions);
 
     BufferAddress.setScreenWidth(screenDimensions.columns);
+  }
+
+  public ScreenOption getCurrentScreenOption() {
+    return currentScreen;
   }
 
   @Override
@@ -215,14 +219,27 @@ public class Screen implements DisplayScreen {
   public ScreenPosition getScreenPosition(int position) {
     return screenPositions[position];
   }
-  
+
   @Override
   public int validate(int position) {
     return pen.validate(position);
   }
 
   @Override
-  public void clearScreen() {
+  public void clearScreen(ScreenOption requestedScreenOption) {
+    if (!requestedScreenOption.equals(currentScreen)) {
+      ScreenDimensions size = requestedScreenOption.equals(ScreenOption.DEFAULT)
+          ? defaultScreenDimensions
+          : alternateScreenDimensions;
+      screenPositions = new ScreenPosition[size.size];
+      pen = Pen.getInstance(screenPositions, size, charset);
+
+      screenPacker = new ScreenPacker(pen, fieldManager, charset);
+      currentScreen = requestedScreenOption;
+      sscpLuData = false;
+      fieldManager.reset();
+      return;
+    }
     cursor.moveTo(0);
     pen.clearScreen();
     sscpLuData = false;

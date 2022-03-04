@@ -23,7 +23,8 @@ public class Field implements Iterable<ScreenPosition> {
   private final StartFieldAttribute startFieldAttribute;
   private final List<ScreenPosition> screenPositions;
   private final ScreenDimensions screenDimensions;
-  
+  private boolean isCircular;
+
   public Field(Screen screen, List<ScreenPosition> positions) {
     this.screen = screen;
     this.screenDimensions = screen.getScreenDimensions();
@@ -92,6 +93,14 @@ public class Field implements Iterable<ScreenPosition> {
 
   public void setModified(boolean modified) {
     startFieldAttribute.setModified(modified);
+  }
+
+  public void setCircular(boolean isCircular) {
+    this.isCircular = isCircular;
+  }
+
+  public boolean isCircular() {
+    return this.isCircular;
   }
 
   public boolean contains(int position) {
@@ -209,4 +218,7 @@ public class Field implements Iterable<ScreenPosition> {
     return screenPositions.iterator();
   }
 
+  public int getEndPosition() {
+    return endPosition;
+  }
 }

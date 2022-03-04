@@ -27,20 +27,19 @@ public class StartFieldExtendedOrder extends Order {
 
     while (totalAttributePairs-- > 0) {
       Optional<Attribute> opt = Attribute.getAttribute(buffer[ptr], buffer[ptr + 1]);
-      assert opt.isPresent();
-      Attribute attribute = opt.get();
+      this.buffer[bptr++] = buffer[ptr++];
+      this.buffer[bptr++] = buffer[ptr++];
 
-      // There has to be a StartFieldAttribute, but it could be anywhere in the list
-      if (attribute.getAttributeType() == Attribute.AttributeType.START_FIELD) {
-        startFieldAttribute = (StartFieldAttribute) attribute;
-      } else {
-        attributes.add(attribute);
+      if (opt.isPresent()) {
+        Attribute attribute = opt.get();
+        // There has to be a StartFieldAttribute, but it could be anywhere in the list
+        if (attribute.getAttributeType() == Attribute.AttributeType.START_FIELD) {
+          startFieldAttribute = (StartFieldAttribute) attribute;
+        } else {
+          attributes.add(attribute);
+        }
       }
-
-      this.buffer[bptr++] = buffer[ptr++];
-      this.buffer[bptr++] = buffer[ptr++];
     }
-
     if (startFieldAttribute != null) {
       startFieldAttribute.setExtended();
     }
@@ -52,6 +51,8 @@ public class StartFieldExtendedOrder extends Order {
     location = pen.getPosition();
     if (startFieldAttribute != null) {
       pen.startField(startFieldAttribute);
+    } else {
+      pen.startField(new StartFieldAttribute((byte) 0));
     }
 
     for (Attribute attribute : attributes) {

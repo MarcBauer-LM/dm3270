@@ -1,5 +1,7 @@
 package com.bytezone.dm3270.display;
 
+import com.bytezone.dm3270.display.Screen.ScreenOption;
+
 public interface DisplayScreen {
 
   Pen getPen();
@@ -10,7 +12,7 @@ public interface DisplayScreen {
 
   int validate(int position);
 
-  void clearScreen();
+  void clearScreen(ScreenOption newScreen);
 
   void insertCursor(int position);
 

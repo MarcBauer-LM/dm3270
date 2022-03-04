@@ -72,6 +72,7 @@ class PenType1 implements Pen {
     ScreenPosition screenPosition = screenPositions[currentPosition];
     screenPosition.reset();
     screenPosition.setAplGraphicChar(b);
+    screenPosition.addAttribute(new com.bytezone.dm3270.attributes.Charset((byte) 0xf1));
     moveRight();
   }
 

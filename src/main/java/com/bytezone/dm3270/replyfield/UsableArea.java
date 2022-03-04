@@ -1,73 +1,136 @@
 package com.bytezone.dm3270.replyfield;
 
-import com.bytezone.dm3270.buffers.Buffer;
 import com.bytezone.dm3270.display.ScreenDimensions;
+import java.nio.ByteBuffer;
 
 public class UsableArea extends QueryReplyField {
 
-  private static String[] measurementUnits = {"Inches", "Millimetres"};
-  private static String[] addressingModes =
-      {"Reserved", "12/14 bit", "Reserved", "12/14/16 bit", "Unmapped"};
-  private byte flags1;
-  private byte flags2;
-  private int addressingMode;
-  private int width;
-  private int height;
-  private byte unitsOfMeasurement;
-  private int xUnits;
-  private int yUnits;
-  private int xNumerator;
-  private int xDenominator;
-  private int yNumerator;
-  private int yDenominator;
-  private int bufferSize;
+  private static final int HARD_COPY_FLAG_MASK = 0x01;
+  private static final int PAGE_PRINTER_FLAG_MASK = 0x04;
+
+  private final AddressingMode addressingMode;
+  private final boolean hardCopy;
+  private final boolean pagePrinter;
+  private final short width;
+  private final short height;
+  private final MeasurementUnit measurementUnit;
+  private final short xPointsDistanceNumerator;
+  private final short xPointsDistanceDenominator;
+  private final short yPointsDistanceNumerator;
+  private final short yPointsDistanceDenominator;
+  private final byte defaultCellXUnits;
+  private final byte defaultCellYUnits;
+  private final short bufferSize;
+
+  private static class MeasurementUnit {
+
+    private static final MeasurementUnit INCHES = new MeasurementUnit(0, "Inches");
+    private static final MeasurementUnit MILLIMETRES = new MeasurementUnit(1, "Millimetres");
+    private static final MeasurementUnit[] UNITS = {INCHES, MILLIMETRES};
+
+    private final byte id;
+    private final String name;
+
+    MeasurementUnit(int id, String name) {
+      this.id = (byte) id;
+      this.name = name;
+    }
+
+    static MeasurementUnit fromByte(byte val) {
+      return (val < UNITS.length) ? UNITS[val] : new MeasurementUnit(val, "Unknown");
+    }
+
+  }
+
+  private static class AddressingMode {
+
+    private static final String RESERVED = "Reserved";
+    private static final AddressingMode ADDRESSING_12_14_BIT = new AddressingMode(1, "12/14 bit");
+    private static final AddressingMode ADDRESSING_14_14_16_BIT = new AddressingMode(3,
+        "12/14/16 bit");
+    private static final AddressingMode[] MODES = {new AddressingMode(0, RESERVED),
+        ADDRESSING_12_14_BIT, new AddressingMode(1, RESERVED), ADDRESSING_14_14_16_BIT};
+
+    private final byte id;
+    private final String name;
+
+    private AddressingMode(int id, String name) {
+      this.id = (byte) id;
+      this.name = name;
+    }
+
+    static AddressingMode fromByte(byte b) {
+      int val = b & 0x0F;
+      return (val < MODES.length) ? MODES[val] : new AddressingMode(val, "Unknown");
+    }
+
+  }
 
   public UsableArea(int rows, int columns) {
     super(USABLE_AREA_REPLY);
-
-    // leave a gap for the screen size fields
-    byte[] rest = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, (byte) 0xD3, 0x03,
-        0x20, 0x00, (byte) 0x9E, 0x02, 0x58, 0x07, 0x0C, 0x07, (byte) 0x80};
-
-    int ptr = createReply(rest.length);
-
-    for (byte b : rest) {
-      reply[ptr++] = b;
-    }
-
-    // copy the screen dimensions into the reply (skipping 4 header bytes)
-    Buffer.packUnsignedShort(columns, reply, 6);
-    Buffer.packUnsignedShort(rows, reply, 8);
-    Buffer.packUnsignedShort(1920, reply, 21);
-
-    checkDataLength(ptr);
+    addressingMode = AddressingMode.ADDRESSING_12_14_BIT;
+    hardCopy = false;
+    pagePrinter = false;
+    width = (short) columns;
+    height = (short) rows;
+    measurementUnit = MeasurementUnit.MILLIMETRES;
+    xPointsDistanceNumerator = 211;
+    xPointsDistanceDenominator = 800;
+    yPointsDistanceNumerator = 158;
+    yPointsDistanceDenominator = 600;
+    defaultCellXUnits = 7;
+    defaultCellYUnits = 12;
+    bufferSize = (short) (rows * columns);
+    ByteBuffer buffer = createReplyBuffer(19);
+    byte flags1 = flagsToByte();
+    buffer.put(flags1);
+    byte flags2 = 0;
+    buffer.put(flags2);
+    buffer.putShort(width);
+    buffer.putShort(height);
+    buffer.put(measurementUnit.id);
+    buffer.putShort(xPointsDistanceNumerator);
+    buffer.putShort(xPointsDistanceDenominator);
+    buffer.putShort(yPointsDistanceNumerator);
+    buffer.putShort(yPointsDistanceDenominator);
+    buffer.put(defaultCellXUnits);
+    buffer.put(defaultCellYUnits);
+    buffer.putShort(bufferSize);
   }
 
   public UsableArea(byte[] buffer) {
     super(buffer);
+    ByteBuffer dataBuffer = ByteBuffer.wrap(buffer);
+    //skip queryReply id
+    dataBuffer.get();
+    assert dataBuffer.get() == USABLE_AREA_REPLY;
+    byte flags1 = dataBuffer.get();
+    addressingMode = AddressingMode.fromByte((byte) (flags1 & 0x0F));
+    hardCopy = (flags1 & HARD_COPY_FLAG_MASK) != 0;
+    pagePrinter = (flags1 & PAGE_PRINTER_FLAG_MASK) != 0;
+    //flags 2 currently being ignored
+    dataBuffer.get();
+    width = dataBuffer.getShort();
+    height = dataBuffer.getShort();
+    measurementUnit = MeasurementUnit.fromByte(dataBuffer.get());
+    xPointsDistanceNumerator = dataBuffer.getShort();
+    xPointsDistanceDenominator = dataBuffer.getShort();
+    yPointsDistanceNumerator = dataBuffer.getShort();
+    yPointsDistanceDenominator = dataBuffer.getShort();
+    defaultCellXUnits = dataBuffer.get();
+    defaultCellYUnits = dataBuffer.get();
+    bufferSize = dataBuffer.getShort();
+  }
 
-    assert data[1] == USABLE_AREA_REPLY;
-
-    flags1 = data[2];
-    flags2 = data[3];
-    width = Buffer.unsignedShort(data, 4);
-    height = Buffer.unsignedShort(data, 6);
-    unitsOfMeasurement = data[8];
-    xNumerator = Buffer.unsignedShort(data, 9);
-    xDenominator = Buffer.unsignedShort(data, 11);
-    yNumerator = Buffer.unsignedShort(data, 13);
-    yDenominator = Buffer.unsignedShort(data, 15);
-    xUnits = data[17] & 0xFF;
-    yUnits = data[18] & 0xFF;
-
-    if (data.length >= 20) {
-      bufferSize = Buffer.unsignedShort(data, 19);
+  private byte flagsToByte() {
+    byte flags = addressingMode.id;
+    if (hardCopy) {
+      flags |= HARD_COPY_FLAG_MASK;
     }
-
-    addressingMode = flags1 & 0x0F;
-    if (addressingMode == 15) {
-      addressingMode = 4;
+    if (pagePrinter) {
+      flags |= PAGE_PRINTER_FLAG_MASK;
     }
+    return flags;
   }
 
   public ScreenDimensions getScreenDimensions() {
@@ -76,24 +139,19 @@ public class UsableArea extends QueryReplyField {
 
   @Override
   public String toString() {
-    StringBuilder text = new StringBuilder(super.toString());
-
-    text.append(String.format("%n  flags1     : %02X", flags1));
-    text.append(String.format("%n  ad mode    : %s", addressingModes[addressingMode]));
-    text.append(String.format("%n  flags2     : %02X", flags2));
-    text.append(String.format("%n  width      : %d", width));
-    text.append(String.format("%n  height     : %d", height));
-    text.append(String.format("%n  units      : %d - %s", unitsOfMeasurement,
-        measurementUnits[unitsOfMeasurement]));
-    text.append(String.format("%n  x ratio    : %d / %d", xNumerator, xDenominator));
-    text.append(String.format("%n  y ratio    : %d / %d", yNumerator, yDenominator));
-    text.append(String.format("%n  x units    : %d", xUnits));
-    text.append(String.format("%n  y units    : %d", yUnits));
-    if (bufferSize > 0) {
-      text.append(String.format("%n  buffer     : %d", bufferSize));
-    }
-
-    return text.toString();
+    return super.toString()
+        + String.format("%n  flags     : %02X", flagsToByte())
+        + String.format("%n  ad mode    : %d - %s", addressingMode.id, addressingMode.name)
+        + String.format("%n  width      : %d", width)
+        + String.format("%n  height     : %d", height)
+        + String.format("%n  units      : %d - %s", measurementUnit.id, measurementUnit.name)
+        + String
+        .format("%n  x ratio    : %d / %d", xPointsDistanceNumerator, xPointsDistanceDenominator)
+        + String
+        .format("%n  y ratio    : %d / %d", yPointsDistanceNumerator, yPointsDistanceDenominator)
+        + String.format("%n  x units    : %d", defaultCellXUnits)
+        + String.format("%n  y units    : %d", defaultCellYUnits)
+        + String.format("%n  buffer     : %d", bufferSize);
   }
 
 }

@@ -27,19 +27,19 @@ public final class ScreenPosition {
 
   public void reset() {
     value = 0;
-    screenContext.withGraphic(false);
+    screenContext = screenContext.withGraphic(false);
     startFieldAttribute = null;
     attributes.clear();
   }
 
   public void setChar(byte value) {
     this.value = value;
-    screenContext.withGraphic(false);
+    screenContext = screenContext.withGraphic(false);
   }
 
   public void setAplGraphicChar(byte value) {
     this.value = value;
-    screenContext.withGraphic(false);
+    screenContext = screenContext.withGraphic(true);
   }
 
   public StartFieldAttribute getStartFieldAttribute() {

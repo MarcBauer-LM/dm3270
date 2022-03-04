@@ -2,7 +2,10 @@ package com.bytezone.dm3270.commands;
 
 import com.bytezone.dm3270.Charset;
 import com.bytezone.dm3270.display.Screen;
+import com.bytezone.dm3270.replyfield.QueryReplyField.ReplyType;
 import com.bytezone.dm3270.structuredfields.StructuredField;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,19 +37,23 @@ public class ReadPartitionQuery extends Command {
         break;
 
       case (byte) 0x03:
-        switch (data[3]) {
-          case 0:
-            LOG.warn("QCode List not written yet");
+        switch (data[3] & 0xFF) {
+          case 0x00:
+            LOG.warn("QCODE list not yet supported");
             break;
 
-          case 1:
-            LOG.warn("Equivalent + QCode List not written yet");
+          case 0x40:
+            typeName = "Read Partition (QueryList): Equivalent + QCODE list";
+            List<ReplyType> queryList = new ArrayList<>();
+            for (int i = 4; i < data.length; i++) {
+              queryList.add(ReplyType.fromId(data[i]));
+            }
+            setReply(new ReadStructuredFieldCommand(queryList, screen.getTelnetState(), charset));
             break;
 
-          case 2:
-            setReply(
-                new ReadStructuredFieldCommand(screen.getTelnetState(), charset));
-            typeName = "Read Partition (QueryList)";
+          case 0x80:
+            typeName = "Read Partition (QueryList): all";
+            setReply(new ReadStructuredFieldCommand(screen.getTelnetState(), charset));
             break;
 
           default:

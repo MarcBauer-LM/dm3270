@@ -3,6 +3,7 @@ package com.bytezone.dm3270.commands;
 import com.bytezone.dm3270.Charset;
 import com.bytezone.dm3270.display.Cursor;
 import com.bytezone.dm3270.display.Screen;
+import com.bytezone.dm3270.display.Screen.ScreenOption;
 import com.bytezone.dm3270.orders.Order;
 import com.bytezone.dm3270.orders.TextOrder;
 import java.util.ArrayList;
@@ -55,7 +56,9 @@ public class WriteCommand extends Command {
     boolean screenDrawRequired = false;
 
     if (eraseWrite) {
-      screen.clearScreen();            // resets pen
+      ScreenOption requestedScreenOption = alternate ? Screen.ScreenOption.ALTERNATE
+          : Screen.ScreenOption.DEFAULT;
+      screen.clearScreen(requestedScreenOption);            // resets pen
       screen.setCurrentScreen(
           alternate ? Screen.ScreenOption.ALTERNATE : Screen.ScreenOption.DEFAULT);
       screen.lockKeyboard("Erase Write");

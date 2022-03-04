@@ -9,14 +9,20 @@ import com.bytezone.dm3270.replyfield.Color;
 import com.bytezone.dm3270.replyfield.Highlight;
 import com.bytezone.dm3270.replyfield.ImplicitPartition;
 import com.bytezone.dm3270.replyfield.QueryReplyField;
+import com.bytezone.dm3270.replyfield.QueryReplyField.ReplyType;
 import com.bytezone.dm3270.replyfield.ReplyModes;
+import com.bytezone.dm3270.replyfield.Summary;
 import com.bytezone.dm3270.replyfield.UsableArea;
 import com.bytezone.dm3270.streams.TelnetState;
 import com.bytezone.dm3270.structuredfields.DefaultStructuredField;
 import com.bytezone.dm3270.structuredfields.QueryReplySF;
 import com.bytezone.dm3270.structuredfields.StructuredField;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +39,11 @@ public class ReadStructuredFieldCommand extends Command {
 
   public ReadStructuredFieldCommand(TelnetState telnetState, Charset charset) {
     this(buildReply(telnetState), charset);
+  }
+
+  public ReadStructuredFieldCommand(List<ReplyType> queryList, TelnetState telnetState,
+      Charset charset) {
+    this(buildReply(queryList, telnetState), charset);
   }
 
   private ReadStructuredFieldCommand(byte[] buffer, Charset charset) {
@@ -77,41 +88,43 @@ public class ReadStructuredFieldCommand extends Command {
   }
 
   private static byte[] buildReply(TelnetState telnetState) {
-    Highlight highlight = new Highlight();
-    Color color = new Color();
+    return buildReplyBytes(buildAvailableReplyFields(telnetState));
+  }
 
+  private static byte[] buildReply(List<ReplyType> queryList, TelnetState telnetState) {
+    Map<ReplyType, QueryReplyField> replyFields = buildAvailableReplyFields(telnetState).stream()
+        .collect(Collectors.toMap(QueryReplyField::getReplyType, r -> r));
+    return buildReplyBytes(queryList.stream()
+        .map(replyFields::get)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList()));
+  }
+
+  private static List<QueryReplyField> buildAvailableReplyFields(TelnetState telnetState) {
     ScreenDimensions screenDimensions = telnetState.getSecondary();
-    ImplicitPartition partition =
-        new ImplicitPartition(screenDimensions.rows, screenDimensions.columns);
+    return Arrays.asList(new UsableArea(screenDimensions.rows, screenDimensions.columns),
+        new Color(),
+        new Highlight(),
+        new ImplicitPartition(screenDimensions.rows, screenDimensions.columns),
+        new ReplyModes(),
+        new CharacterSets()
+        );
+  }
 
-    List<QueryReplyField> replyFields = new ArrayList<>();
-
-    replyFields.add(color);
-    replyFields.add(highlight);
-    replyFields.add(new UsableArea(screenDimensions.rows, screenDimensions.columns));
-    replyFields.add(partition);
-    replyFields.add(new ReplyModes());
-    replyFields.add(new CharacterSets());
-
-    // calculate the size of the reply record
-    int replyLength = 1;
-    for (QueryReplyField reply : replyFields) {
-      replyLength += reply.replySize();
-    }
-
-    // create the reply record buffer
+  private static byte[] buildReplyBytes(List<QueryReplyField> replyFields) {
+    List<QueryReplyField> replyFieldsWithSummary = new ArrayList<>();
+    replyFieldsWithSummary.add(new Summary(replyFields));
+    replyFieldsWithSummary.addAll(replyFields);
+    int replyLength = replyFieldsWithSummary.stream()
+        .mapToInt(QueryReplyField::replySize)
+        .sum() + 1;
     byte[] buffer = new byte[replyLength];
-
     int ptr = 0;
     buffer[ptr++] = AIDCommand.AID_STRUCTURED_FIELD;
-
-    // fill buffer with reply components
-    for (QueryReplyField reply : replyFields) {
+    for (QueryReplyField reply : replyFieldsWithSummary) {
       ptr = reply.packReply(buffer, ptr);
     }
-
     assert ptr == replyLength;
-
     return buffer;
   }
 

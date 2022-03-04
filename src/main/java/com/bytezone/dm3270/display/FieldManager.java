@@ -47,7 +47,7 @@ public class FieldManager {
       auxFields.add(new Field(screen, protoField));
       setContexts(protoField);
     }
-    
+
     fields.addAll(auxFields);
     // link uprotected fields
     Field previousUnprotectedField = null;
@@ -79,9 +79,19 @@ public class FieldManager {
         }
       }
     }
-
+    configureCircularField();
     screenWatcher.check();
     fireScreenChanged(screenWatcher);
+  }
+
+  private void configureCircularField() {
+    if (unprotectedFields.isEmpty()) {
+      return;
+    }
+    Field lastField = unprotectedFields.get(unprotectedFields.size() - 1);
+    if (lastField.getFirstLocation() > lastField.getEndPosition()) {
+      lastField.setCircular(true);
+    }
   }
 
   private void addField(Field field) {
@@ -221,6 +231,16 @@ public class FieldManager {
     }
 
     if (inField && !positions.isEmpty()) {
+      //check if is a circular screen position component
+      if (positions.get(0) == screenPositions[0] || !components.isEmpty() && !components.get(0)
+          .get(0).equals(screenPositions[0])) {
+        int circularUntil = !components.isEmpty() ? components.get(0).get(0).getPosition()
+            : positions.get(0).getPosition();
+        ptr = 0;
+        while (ptr < circularUntil) {
+          positions.add(screenPositions[ptr++]);
+        }
+      }
       components.add(new ArrayList<>(positions));
     }
 

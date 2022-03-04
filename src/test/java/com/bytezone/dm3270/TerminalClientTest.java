@@ -413,8 +413,7 @@ public class TerminalClientTest {
     awaitKeyboardUnlock();
     client.setFieldTextByCoord(12, 21, USERNAME);
     client.setFieldTextByCoord(13, 21, PASSWORD);
-    sendEnter();
-    awaitKeyboardUnlock();
+    sendEnterAndWaitKeyboardUnlock();
     assertThat(getScreenText())
         .isEqualTo(getSccpLuLoginSuccessScreen());
   }
@@ -680,12 +679,10 @@ public class TerminalClientTest {
     setupSscpLuLoginFlow();
     awaitKeyboardUnlock();
     sendFieldByTab(APP_NAME, 0);
-    sendEnter();
-    awaitKeyboardUnlock();
+    sendEnterAndWaitKeyboardUnlock();
     sendFieldByTab(USERNAME, 0);
     sendFieldByTab(PASSWORD, 1);
-    sendEnter();
-    awaitKeyboardUnlock();
+    sendEnterAndWaitKeyboardUnlock();
     assertThat(getScreenText()).isEqualTo(getSccpLuLoginSuccessScreen());
   }
 
@@ -698,12 +695,10 @@ public class TerminalClientTest {
       throws Exception {
     awaitKeyboardUnlock();
     sendFieldByCoord(1, 27, "testusr");
-    sendEnter();
-    awaitKeyboardUnlock();
+    sendEnterAndWaitKeyboardUnlock();
     client.setCursorPosition(50);
     sendFieldByTab("testpsw", 1);
-    sendEnter();
-    awaitKeyboardUnlock();
+    sendEnterAndWaitKeyboardUnlock();
   }
 
   @Test
@@ -713,8 +708,7 @@ public class TerminalClientTest {
     awaitKeyboardUnlock();
     client.setFieldTextByLabel("Userid:", "testusr ");
     client.setFieldTextByLabel("Passcode:", "testpsw");
-    sendEnter();
-    awaitKeyboardUnlock();
+    sendEnterAndWaitKeyboardUnlock();
     assertThat(getFileContent("login-3278-M2-E-final-screen.txt")).isEqualTo(getScreenText());
   }
 
@@ -724,9 +718,42 @@ public class TerminalClientTest {
     awaitKeyboardUnlock();
     sendFieldByTab("TESTUSR", 0);
     sendFieldByTab("TESTPSW", 1);
+    sendEnterAndWaitKeyboardUnlock();
+    assertThat(getScreenText()).isEqualTo(getFileContent("success-apl-screen.txt"));
+  }
+
+  @Test
+  public void shouldSetFieldsWhenFieldsNotHaveStartAttribute() throws Exception {
+    setupExtendedFlow(TERMINAL_MODEL_TYPE_TWO, SCREEN_DIMENSIONS, "/field_without_start_attribute.yml");
+    awaitKeyboardUnlock();
+    sendFieldByTab("TESTUSR", 0);
+    sendFieldByTab("TESTPSW", 2);
+    sendEnterAndWaitKeyboardUnlock();
+    assertThat(getScreenText()).isEqualTo(getFileContent(
+        "field_without_start_attribute_expected_screen.txt"));
+  }
+
+  @Test
+  public void shouldConnectCorrectlyWhenQueryListEquivalentPlusQCODE() throws Exception {
+    setupExtendedFlow(TERMINAL_MODEL_TYPE_TWO, SCREEN_DIMENSIONS, "/test_capabilities.yml");
+    awaitKeyboardUnlock();
+    assertThat(getScreenText()).isEqualTo(getFileContent(
+        "field_without_start_attribute_expected_screen.txt"));
+  }
+
+  @Test
+  public void shouldNotFailWhenFieldAttributeIsNotRecognised() throws Exception {
+    setupExtendedFlow(TERMINAL_MODEL_TYPE_TWO, SCREEN_DIMENSIONS, "/attribute_not_present.yml");
+    awaitKeyboardUnlock();
+    sendFieldByTab("1", 0);
+    sendEnterAndWaitKeyboardUnlock();
+    assertThat(getScreenText()).isEqualTo(getFileContent(
+        "attribute_not_present_expected_screen.txt"));
+  }
+
+  private void sendEnterAndWaitKeyboardUnlock() throws TimeoutException, InterruptedException {
     sendEnter();
     awaitKeyboardUnlock();
-    assertThat(getScreenText()).isEqualTo(getFileContent("success-apl-screen.txt"));
   }
 
   @Test

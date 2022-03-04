@@ -1,0 +1,24 @@
+ MDIV                        DIVISION MAINTENANCE              06-18-21 19:17:24
+                                                                                
+                                                                                
+  Starting Div:  000                                               MORE:   +    
+                                          ------- Division Manager -------      
+  ACT Div Division Name                   Emp #  Employee Name                  
+      000 DIV111                          000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+      000                                 000000                                
+                                                                                
+            ACTION:  A=Add  M=Modify  D=Delete  L=List Departments              
+                                                                                
+ DIV003 Requested divisions displayed.                                          
+ F01=HELP F03=MENU F07=PREV F08=NEXT                                            

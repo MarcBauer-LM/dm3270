@@ -3,6 +3,7 @@ package com.bytezone.dm3270.extended;
 import com.bytezone.dm3270.Charset;
 import com.bytezone.dm3270.commands.Command;
 import com.bytezone.dm3270.display.Screen;
+import com.bytezone.dm3270.display.Screen.ScreenOption;
 import com.bytezone.dm3270.orders.InsertCursorOrder;
 import com.bytezone.dm3270.orders.Order;
 import com.bytezone.dm3270.orders.TextOrder;
@@ -38,9 +39,9 @@ public class SscpLuDataCommand extends Command {
 
   @Override
   public void process(Screen screen) {
-    screen.setCurrentScreen(Screen.ScreenOption.DEFAULT);
+    screen.setCurrentScreen(ScreenOption.DEFAULT);
     screen.lockKeyboard("Erase Write");
-    screen.clearScreen();
+    screen.clearScreen(ScreenOption.DEFAULT);
     screen.setSscpLuData();
 
     if (orders.size() > 0) {

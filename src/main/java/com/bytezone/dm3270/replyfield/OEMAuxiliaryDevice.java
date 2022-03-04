@@ -3,18 +3,18 @@ package com.bytezone.dm3270.replyfield;
 import com.bytezone.dm3270.Charset;
 import com.bytezone.dm3270.structuredfields.StructuredField;
 
-public class OEMAuxilliaryDevice extends QueryReplyField {
+public class OEMAuxiliaryDevice extends QueryReplyField {
 
-  private byte flags;
-  private byte refID;
-  private String deviceType;
-  private String userName;
+  private final byte flags;
+  private final byte refID;
+  private final String deviceType;
+  private final String userName;
 
-  public OEMAuxilliaryDevice(byte[] buffer, Charset charset) {
+  public OEMAuxiliaryDevice(byte[] buffer, Charset charset) {
     super(buffer);
 
     assert data[0] == StructuredField.QUERY_REPLY;
-    assert data[1] == QueryReplyField.OEM_AUXILLIARY_DEVICE_REPLY;
+    assert data[1] == QueryReplyField.OEM_AUXILIARY_DEVICE_REPLY;
 
     flags = data[2];
     refID = data[3];

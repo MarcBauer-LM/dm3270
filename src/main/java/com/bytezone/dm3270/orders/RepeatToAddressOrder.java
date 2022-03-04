@@ -3,6 +3,7 @@ package com.bytezone.dm3270.orders;
 import com.bytezone.dm3270.Charset;
 import com.bytezone.dm3270.display.DisplayScreen;
 import com.bytezone.dm3270.display.Pen;
+import com.bytezone.dm3270.display.Screen;
 
 public class RepeatToAddressOrder extends Order {
 
@@ -41,7 +42,7 @@ public class RepeatToAddressOrder extends Order {
 
     Pen pen = screen.getPen();
     if (pen.getPosition() == stopLocation) {
-      screen.clearScreen();
+      screen.clearScreen(((Screen) screen).getCurrentScreenOption());
     } else {
       while (pen.getPosition() != stopLocation) {
         pen.write(rptChar);
